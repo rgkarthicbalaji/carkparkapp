@@ -10,6 +10,6 @@ This application has the model representation as below,
 
 # API Documentation
 
-API documentation on for request/response is with configured Swagger
+API documentation on for request/response is configured with Swagger
 
 ![image](https://user-images.githubusercontent.com/32460730/124624390-74bff880-de9a-11eb-99d7-940e510c20ac.png)
