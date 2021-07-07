@@ -1,4 +1,4 @@
-package com.asses.park.exception;
+package com.asses.park.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -7,24 +7,24 @@ import org.springframework.http.HttpStatus;
 import java.time.LocalDateTime;
 
 @Data
-public class ResponseError {
+public class CustomResponse {
 
     private HttpStatus status;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime timestamp;
     private String message;
 
-    private ResponseError() {
+    private CustomResponse() {
         timestamp = LocalDateTime.now();
     }
 
-    ResponseError(HttpStatus status, Throwable ex) {
+    public CustomResponse(HttpStatus status, Throwable ex) {
         this();
         this.status = status;
         this.message = ex.getMessage();
     }
 
-    ResponseError(HttpStatus status, String message) {
+    public CustomResponse(HttpStatus status, String message) {
         this();
         this.status = status;
         this.message = message;

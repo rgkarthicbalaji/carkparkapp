@@ -8,9 +8,15 @@ import com.asses.park.repository.CustomerRepository;
 import com.asses.park.repository.ParkingSlotRepository;
 import com.asses.park.repository.SlotBookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -25,8 +31,9 @@ public class SlotBookingService {
     @Autowired
     ParkingSlotRepository parkingSlotRepository;
 
-    private final String BOOKING_UNIQUEID_ALLOCATION_ISSUE = "Provided bookingUniqueId Is Inappropriate To This Booking";
-    private final String BOOKING_UNIQUEID_INVALID_REFERENCE = "Provided bookingUniqueId Is Invalid Or Hould Have Elapsed";
+    private final String BOOKING_UNIQUEID_INAPPROPRIATE = "Provided bookingUniqueId Is Inappropriate For Booking";
+    private final String BOOKING_UNIQUEID_INVALID_REFERENCE = "Provided bookingUniqueId Is Invalid Or Would Have Elapsed";
+    private final String BOOKING_END_TIME_NOT_ELASPED = "Booking End Time Is yet To Get Elaspsed,Perform Reallocation Later";
 
     @Transactional
     public SlotBooking allocateParkingSlot(SlotBooking slotBooking) throws Exception {
@@ -72,7 +79,7 @@ public class SlotBookingService {
     }
 
     @Transactional
-    public SlotBooking reAllocateParkingSlot(SlotBooking slotBooking) throws Exception{
+    public SlotBooking reAllocateParkingSlot(SlotBooking slotBooking) throws Exception {
         SlotBooking bookingResp = new SlotBooking();
         Optional<Customer> customerOptional = customerRepository.findById(slotBooking.getCustomer().getSsNumber());
         if (customerOptional.isPresent()) {
@@ -86,12 +93,15 @@ public class SlotBookingService {
                     throw new ParkingSlotAlreadyBookedException();
                 }
                 Optional<List<SlotBooking>> slotBookingOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueId(slotBooking.getBookingUniqueId()));
-                if(slotBookingOptional.isPresent()){
-                    Optional<List<SlotBooking>> slotBookinUniqueOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueIdAndIsBookedNow(slotBooking.getBookingUniqueId(),Boolean.TRUE));
-                    if(slotBookinUniqueOptional.isPresent()){
+                if (slotBookingOptional.isPresent()) {
+                    Optional<List<SlotBooking>> slotBookinUniqueOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueIdAndIsBookedNow(slotBooking.getBookingUniqueId(), Boolean.TRUE));
+                    if (slotBookinUniqueOptional.isPresent()) {
                         List<SlotBooking> slotBookings = slotBookinUniqueOptional.get();
-                        if(slotBookings.size()==1){
+                        if (slotBookings.size() == 1) {
                             SlotBooking presentSlotBooking = slotBookings.get(0);
+/*                            if(Timestamp.valueOf(LocalDateTime.now()).before(presentSlotBooking.getEndTime())){
+                                throw new Exception(BOOKING_END_TIME_NOT_ELASPED);
+                            }else{*/
                             ParkingSlot presentParkingSlot = presentSlotBooking.getParkingSlot();
                             Customer presentCustomer = presentSlotBooking.getCustomer();
 
@@ -113,14 +123,14 @@ public class SlotBookingService {
                             presentParkingSlot.setIsBooked(Boolean.FALSE);
                             slotBookingRepository.saveAndFlush(presentSlotBooking);
                             bookingResp = slotBookingRepository.saveAndFlush(newSlotBooking);
-
-                        }else{
-                            throw new Exception(BOOKING_UNIQUEID_ALLOCATION_ISSUE);
+//                            }
+                        } else {
+                            throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INAPPROPRIATE);
                         }
-                    }else{
+                    } else {
                         throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
                     }
-                }else{
+                } else {
                     throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
                 }
 
@@ -133,5 +143,111 @@ public class SlotBookingService {
             throw new CustomerNotFoundException();
         }
         return bookingResp;
+    }
+
+    public Long cancelParkingSlot(UUID bookingUniqueId) throws Exception {
+        Long slotUsageHours = null;
+        Optional<List<SlotBooking>> slotBookingOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueId(bookingUniqueId));
+        if (slotBookingOptional.isPresent()) {
+            Optional<List<SlotBooking>> slotBookinUniqueOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueIdAndIsBookedNow(bookingUniqueId, Boolean.TRUE));
+            if (slotBookinUniqueOptional.isPresent()) {
+                List<SlotBooking> slotBookings = slotBookinUniqueOptional.get();
+                if (slotBookings.size() == 1) {
+                    SlotBooking presentSlotBooking = slotBookings.get(0);
+
+                    ParkingSlot presentParkingSlot = presentSlotBooking.getParkingSlot();
+
+                    SlotBooking firstSlotBooking = slotBookingOptional.get().get(0);
+                    LocalDateTime startUsageDateTime = firstSlotBooking.getStartTime().toLocalDateTime();
+                    LocalDateTime endUsageDateTime = presentSlotBooking.getEndTime().toLocalDateTime();
+                    Duration duration = Duration.between(startUsageDateTime, endUsageDateTime);
+
+                    presentSlotBooking.setIsBookedNow(Boolean.FALSE);
+                    presentParkingSlot.setIsBooked(Boolean.FALSE);
+                    slotBookingRepository.saveAndFlush(presentSlotBooking);
+                    slotUsageHours = duration.toHours();
+                } else {
+                    throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INAPPROPRIATE);
+                }
+            } else {
+                throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
+            }
+        } else {
+            throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
+        }
+        return slotUsageHours;
+    }
+
+    @Scheduled(initialDelay = 10000, fixedRate = 5000)
+    @Transactional
+    public void runParkingSlotReallocationTask() throws Exception {
+        Optional<List<SlotBooking>> slotBookingsOptional = Optional.ofNullable(slotBookingRepository.findByIsBookedNow(Boolean.TRUE));
+        if (slotBookingsOptional.isPresent()) {
+            List<SlotBooking> bookedSlotBookings = slotBookingsOptional.get();
+
+            for (SlotBooking slotBooking : bookedSlotBookings) {
+                Optional<Customer> customerOptional = customerRepository.findById(slotBooking.getCustomer().getSsNumber());
+                if (customerOptional.isPresent()) {
+                    if (slotBooking.getHourSlot() >= 1 && slotBooking.getHourSlot() <= 4) {
+                        Optional<ParkingSlot> parkingSlotPresentOpt = parkingSlotRepository.findById(slotBooking.getParkingSlot().getSlotId());
+                        if (!parkingSlotPresentOpt.isPresent()) {
+                            throw new ParkingSlotNotFoundException();
+                        }
+
+                        Optional<List<SlotBooking>> slotBookingOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueId(slotBooking.getBookingUniqueId()));
+                        if (slotBookingOptional.isPresent()) {
+                            Optional<List<SlotBooking>> slotBookinUniqueOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueIdAndIsBookedNow(slotBooking.getBookingUniqueId(), Boolean.TRUE));
+                            if (slotBookinUniqueOptional.isPresent()) {
+                                List<SlotBooking> slotBookings = slotBookinUniqueOptional.get();
+                                if (slotBookings.size() == 1) {
+                                    SlotBooking presentSlotBooking = slotBookings.get(0);
+                                    if (Timestamp.valueOf(LocalDateTime.now()).before(presentSlotBooking.getEndTime())) {
+                                        System.out.println(BOOKING_END_TIME_NOT_ELASPED+" For: "+slotBooking.getBookingUniqueId());
+                                    } else {
+                                        ParkingSlot presentParkingSlot = presentSlotBooking.getParkingSlot();
+                                        Customer presentCustomer = presentSlotBooking.getCustomer();
+
+                                        SlotBooking newSlotBooking = new SlotBooking();
+                                        newSlotBooking.setIsBookedNow(Boolean.TRUE);
+                                        newSlotBooking.setBookingUniqueId(slotBooking.getBookingUniqueId());
+                                        newSlotBooking.setStartTime(slotBooking.getStartTime());
+                                        newSlotBooking.setEndTime(slotBooking.getEndTime());
+                                        newSlotBooking.setHourSlot(slotBooking.getHourSlot());
+
+                                        Optional<List<ParkingSlot>> parkingSltOpt = Optional.ofNullable(parkingSlotRepository.findByIsBooked(Boolean.FALSE));
+                                        if (parkingSltOpt.isPresent()) {
+                                            ParkingSlot newParkingSlot = parkingSltOpt.get().get(0);
+                                            newParkingSlot.setIsBooked(Boolean.TRUE);
+
+                                            newSlotBooking.setParkingSlot(newParkingSlot);
+                                            newSlotBooking.setCustomer(presentCustomer);
+
+                                            presentSlotBooking.setIsBookedNow(Boolean.FALSE);
+                                            presentParkingSlot.setIsBooked(Boolean.FALSE);
+                                            slotBookingRepository.saveAndFlush(presentSlotBooking);
+                                            slotBookingRepository.saveAndFlush(newSlotBooking);
+                                            System.out.println("Reallocation Done For: "+slotBooking.getBookingUniqueId());
+                                        }
+                                    }
+                                } else {
+                                    throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INAPPROPRIATE);
+                                }
+                            } else {
+                                throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
+                            }
+                        } else {
+                            throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
+                        }
+
+
+                    } else {
+                        throw new ParkingSlotTimeNotInRageException();
+                    }
+
+                } else {
+                    throw new CustomerNotFoundException();
+                }
+            }
+        }
     }
 }

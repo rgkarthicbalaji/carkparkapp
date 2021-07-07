@@ -1,5 +1,6 @@
 package com.asses.park.controller;
 
+import com.asses.park.dto.CustomResponse;
 import com.asses.park.dto.SlotBookingInfo;
 import com.asses.park.model.SlotBooking;
 import com.asses.park.service.SlotBookingService;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/parking/slot")
@@ -52,5 +54,13 @@ public class SlotBookingController {
         SlotBooking slotBookingServiceResp = slotBookingService.reAllocateParkingSlot(slotBooking);
         SlotBookingInfo slotBookingInfoResp = utility.slotBookingModelToDto.apply(slotBookingServiceResp);
         return ResponseEntity.status(HttpStatus.CREATED).body(slotBookingInfoResp);
+    }
+
+    @PutMapping(path = "/cancel/", produces = {"application/json"})
+    @ResponseBody
+    public CustomResponse cancelParkingSlot(@RequestParam UUID bookingUniqueId) throws Exception {
+            Long usageTime = slotBookingService.cancelParkingSlot(bookingUniqueId);
+            CustomResponse customResponse = new CustomResponse(HttpStatus.OK,"Your Parking Slot Is Cancelled Now, Your Total Parking Usage Time Is "+usageTime+" hrs");
+            return customResponse;
     }
 }

@@ -11,4 +11,5 @@ public interface SlotBookingRepository extends JpaRepository<SlotBooking,Long> {
     List<SlotBooking> findByCustomerAndIsBookedNow(Customer customer,Boolean isBooked);
     List<SlotBooking> findByBookingUniqueId(UUID bookingUniqueId);
     List<SlotBooking> findByBookingUniqueIdAndIsBookedNow(UUID bookingUniqueId, Boolean isBooked);
+    List<SlotBooking> findByIsBookedNow(Boolean isBooked);
 }

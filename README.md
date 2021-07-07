@@ -1,6 +1,6 @@
 # carkparkapp 
 
-This application is used to register customer,fetch parking slots information and request for allocate/reallocate the access for cark park
+This application is used to register customer,fetch parking slots information and request for allocate,amend/auto-amend and unallocate the cark park slots
 
 # Application Design
 

@@ -1,6 +1,8 @@
 package com.asses.park.exception;
 
+import com.asses.park.dto.CustomResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +28,14 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         return buildResponseEntity(
-                new ResponseError(BAD_REQUEST, ex.getBindingResult().getFieldError().getDefaultMessage())
+                new CustomResponse(BAD_REQUEST, ex.getBindingResult().getFieldError().getDefaultMessage())
+        );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        return buildResponseEntity(
+                new CustomResponse(BAD_REQUEST, ex.getRootCause().getMessage())
         );
     }
 
@@ -35,7 +44,7 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
         log.error(CUSTOMER_ALREADY_REGISTERED);
 
         return buildResponseEntity(
-                new ResponseError(FORBIDDEN, CUSTOMER_ALREADY_REGISTERED)
+                new CustomResponse(FORBIDDEN, CUSTOMER_ALREADY_REGISTERED)
         );
     }
 
@@ -44,7 +53,7 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
         log.error(CUSTOMER_NOT_FOUND);
 
         return buildResponseEntity(
-                new ResponseError(NOT_FOUND, CUSTOMER_NOT_FOUND)
+                new CustomResponse(NOT_FOUND, CUSTOMER_NOT_FOUND)
         );
     }
 
@@ -53,7 +62,7 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
         log.error(PARKING_SLOT_TIME_NOT_INRANGE);
 
         return buildResponseEntity(
-                new ResponseError(BAD_REQUEST, PARKING_SLOT_TIME_NOT_INRANGE)
+                new CustomResponse(BAD_REQUEST, PARKING_SLOT_TIME_NOT_INRANGE)
         );
     }
 
@@ -62,7 +71,7 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
         log.error(PARKING_SLOT_NOT_FOUND);
 
         return buildResponseEntity(
-                new ResponseError(NOT_FOUND, PARKING_SLOT_NOT_FOUND)
+                new CustomResponse(NOT_FOUND, PARKING_SLOT_NOT_FOUND)
         );
     }
 
@@ -71,16 +80,16 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
         log.error(PARKING_SLOT_ALREADY_BOOKED);
 
         return buildResponseEntity(
-                new ResponseError(FORBIDDEN, PARKING_SLOT_ALREADY_BOOKED)
+                new CustomResponse(FORBIDDEN, PARKING_SLOT_ALREADY_BOOKED)
         );
     }
 
     @ExceptionHandler(CustomerAlreadyOwnsSlotException.class)
-    public ResponseEntity<Object> handleCustomerAlreadyOwnsSlot(ParkingSlotAlreadyBookedException ex) {
+    public ResponseEntity<Object> handleCustomerAlreadyOwnsSlot(CustomerAlreadyOwnsSlotException ex) {
         log.error(CUSTOMER_ALREADY_OWNS_SLOT);
 
         return buildResponseEntity(
-                new ResponseError(FORBIDDEN, CUSTOMER_ALREADY_OWNS_SLOT)
+                new CustomResponse(FORBIDDEN, CUSTOMER_ALREADY_OWNS_SLOT)
         );
     }
 
@@ -89,7 +98,7 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
         log.error(ex.getMessage());
 
         return buildResponseEntity(
-                new ResponseError(FORBIDDEN, ex.getMessage())
+                new CustomResponse(FORBIDDEN, ex.getMessage())
         );
     }
 
@@ -97,11 +106,11 @@ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> handleException(Exception exception) {
 
         return buildResponseEntity(
-                new ResponseError(INTERNAL_SERVER_ERROR, exception.getMessage())
+                new CustomResponse(INTERNAL_SERVER_ERROR, exception.getMessage())
         );
     }
 
-    private ResponseEntity<Object> buildResponseEntity(ResponseError responseError) {
-        return new ResponseEntity<>(responseError, responseError.getStatus());
+    private ResponseEntity<Object> buildResponseEntity(CustomResponse customResponse) {
+        return new ResponseEntity<>(customResponse, customResponse.getStatus());
     }
 }
