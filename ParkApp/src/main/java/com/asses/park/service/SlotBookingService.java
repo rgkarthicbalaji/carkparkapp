@@ -1,5 +1,6 @@
 package com.asses.park.service;
 
+import com.asses.park.exception.*;
 import com.asses.park.model.Customer;
 import com.asses.park.model.ParkingSlot;
 import com.asses.park.model.SlotBooking;
@@ -24,7 +25,9 @@ public class SlotBookingService {
     @Autowired
     ParkingSlotRepository parkingSlotRepository;
 
-    //TODO: Handle error if user already exist
+    private final String BOOKING_UNIQUEID_ALLOCATION_ISSUE = "Provided bookingUniqueId Is Inappropriate To This Booking";
+    private final String BOOKING_UNIQUEID_INVALID_REFERENCE = "Provided bookingUniqueId Is Invalid Or Hould Have Elapsed";
+
     @Transactional
     public SlotBooking allocateParkingSlot(SlotBooking slotBooking) throws Exception {
         SlotBooking bookingResp = new SlotBooking();
@@ -33,11 +36,11 @@ public class SlotBookingService {
             if (slotBooking.getHourSlot() >= 1 && slotBooking.getHourSlot() <= 4) {
                 Optional<ParkingSlot> parkingSlotPresentOpt = parkingSlotRepository.findById(slotBooking.getParkingSlot().getSlotId());
                 if (!parkingSlotPresentOpt.isPresent()) {
-                    throw new Exception("ParkingSlot Not Found Exception");
+                    throw new ParkingSlotNotFoundException();
                 }
                 Optional<ParkingSlot> parkingSlotOpt = Optional.ofNullable(parkingSlotRepository.findBySlotIdAndIsBooked(slotBooking.getParkingSlot().getSlotId(), Boolean.TRUE));
                 if (parkingSlotOpt.isPresent()) {
-                    throw new Exception("ParkingSlot Already Booked Exception");
+                    throw new ParkingSlotAlreadyBookedException();
                 }
 
                 Customer customer = customerOptional.get();
@@ -45,7 +48,7 @@ public class SlotBookingService {
                 if (optionalSlotBookingList.isPresent()) {
                     List<SlotBooking> slotBookings = optionalSlotBookingList.get();
                     if (slotBookings.size() > 0) {
-                        throw new Exception("Customer already has a booked slot Exception");
+                        throw new CustomerAlreadyOwnsSlotException();
                     }
                 }
 
@@ -59,15 +62,11 @@ public class SlotBookingService {
                 slotBooking.setCustomer(customer);
                 bookingResp = slotBookingRepository.save(slotBooking);
 
-                //parkingSlotRepository.save(slotBooking.getParkingSlot());
-
             } else {
-                //Throw ParkingHour slot time Not In Range Exception
-                throw new Exception("ParkingHour slot time Not In Range");
+                throw new ParkingSlotTimeNotInRageException();
             }
         } else {
-            //Throw User Not Found Exception
-            throw new Exception("User Not Found Exception");
+            throw new CustomerNotFoundException();
         }
         return bookingResp;
     }
@@ -80,11 +79,11 @@ public class SlotBookingService {
             if (slotBooking.getHourSlot() >= 1 && slotBooking.getHourSlot() <= 4) {
                 Optional<ParkingSlot> parkingSlotPresentOpt = parkingSlotRepository.findById(slotBooking.getParkingSlot().getSlotId());
                 if (!parkingSlotPresentOpt.isPresent()) {
-                    throw new Exception("ParkingSlot Not Found Exception");
+                    throw new ParkingSlotNotFoundException();
                 }
                 Optional<ParkingSlot> parkingSlotOpt = Optional.ofNullable(parkingSlotRepository.findBySlotIdAndIsBooked(slotBooking.getParkingSlot().getSlotId(), Boolean.TRUE));
                 if (parkingSlotOpt.isPresent()) {
-                    throw new Exception("ParkingSlot Already Booked Exception");
+                    throw new ParkingSlotAlreadyBookedException();
                 }
                 Optional<List<SlotBooking>> slotBookingOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueId(slotBooking.getBookingUniqueId()));
                 if(slotBookingOptional.isPresent()){
@@ -115,27 +114,23 @@ public class SlotBookingService {
                             slotBookingRepository.saveAndFlush(presentSlotBooking);
                             bookingResp = slotBookingRepository.saveAndFlush(newSlotBooking);
 
-                            //List<SlotBooking> bookings = Arrays.asList(presentSlotBooking,newSlotBooking);
-                            //slotBookingRepository.saveAll(new ArrayList<>(bookings));
                         }else{
-                            throw new Exception("Provided bookingUniqueId has issues with allocation");
+                            throw new Exception(BOOKING_UNIQUEID_ALLOCATION_ISSUE);
                         }
                     }else{
-                        throw new Exception("Provided bookingUniqueId is not having any valid booking at present or would have elapsed");
+                        throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
                     }
                 }else{
-                    throw new Exception("Provided bookingUniqueId is not a valid reference,provided for this booking parking slot");
+                    throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
                 }
 
 
             } else {
-                //Throw ParkingHour slot time Not In Range Exception
-                throw new Exception("ParkingHour slot time Not In Range");
+                throw new ParkingSlotTimeNotInRageException();
             }
 
         } else {
-            //Throw User Not Found Exception
-            throw new Exception("User Not Found Exception");
+            throw new CustomerNotFoundException();
         }
         return bookingResp;
     }

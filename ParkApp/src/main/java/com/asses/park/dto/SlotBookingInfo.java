@@ -28,8 +28,8 @@ public class SlotBookingInfo implements Serializable {
     private CustomerInfo customerInfo;
 
     @NotNull(message = "hourSlot should not be empty and accepted only valid of its in hourSlot>=1 and hourSlot<=4 range")
-    @Min(value = 1,message = "hourSlot is valid if its always greater than or equal to 1")
-    @Max(value = 4,message = "hourSlot is valid if its always lesser than or equal to 4")
+    @Min(value = 1,message = "hourSlot is valid only if its always greater than or equal to 1")
+    @Max(value = 4,message = "hourSlot is valid only if its always lesser than or equal to 4")
     private Long hourSlot;
 
     private Timestamp startTime;

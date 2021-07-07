@@ -15,7 +15,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CustomerInfo implements Serializable {
+public class CustomerInfo implements Serializable{
     @Min(value = 1,message = "ssNumber is always starts with positive number and greater than 1")
     @NotNull(message = "ssNumber should be given as number E.g 1234")
     private Long ssNumber;

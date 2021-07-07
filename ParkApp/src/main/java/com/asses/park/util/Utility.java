@@ -4,12 +4,8 @@ import com.asses.park.dto.CustomerInfo;
 import com.asses.park.dto.ParkingSlotInfo;
 import com.asses.park.dto.SlotBookingInfo;
 import com.asses.park.model.Customer;
-import com.asses.park.model.CustomerParkingIdentity;
 import com.asses.park.model.ParkingSlot;
 import com.asses.park.model.SlotBooking;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -18,12 +14,6 @@ import java.util.function.Function;
 
 @Component
 public class Utility {
-    public Object convertObject(Object o, TypeReference ref) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        return mapper.convertValue(o, ref);
-    }
-
     public Function<CustomerInfo,Customer> customerDtoToModel = customerInfo -> {
         Customer customer = new Customer();
         customer.setSsNumber(customerInfo.getSsNumber());
@@ -61,6 +51,21 @@ public class Utility {
 
 
         return parkingSlotInfoList;
+    };
+
+    public Function<List<ParkingSlotInfo>,List<ParkingSlot>> parkingSlotDtoListToModel = parkingSlotsInfos -> {
+        List<ParkingSlot> parkingSlotList = new ArrayList<>();
+
+        for(ParkingSlotInfo psInfo:parkingSlotsInfos){
+            ParkingSlot parkingSlot = new ParkingSlot();
+            parkingSlot.setSlotId(psInfo.getSlotId());
+            parkingSlot.setSlotName(psInfo.getSlotName());
+            parkingSlot.setIsBooked(psInfo.getIsBooked());
+            parkingSlotList.add(parkingSlot);
+        }
+
+
+        return parkingSlotList;
     };
 
     public Function<ParkingSlot,ParkingSlotInfo> parkingSlotModelToDto = parkingSlot -> {

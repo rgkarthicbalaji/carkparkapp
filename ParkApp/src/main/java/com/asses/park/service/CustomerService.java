@@ -1,5 +1,6 @@
 package com.asses.park.service;
 
+import com.asses.park.exception.CustomerAlreadyRegisteredException;
 import com.asses.park.model.Customer;
 import com.asses.park.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ public class CustomerService {
         if(!customerRepository.findById(customer.getSsNumber()).isPresent()){
             customerResponse = customerRepository.save(customer);
         }else{
-            throw new Exception("User Already Registered");
+            throw new CustomerAlreadyRegisteredException();
         }
         return customerResponse;
     }

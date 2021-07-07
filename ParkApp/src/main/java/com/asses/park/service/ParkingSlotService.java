@@ -28,4 +28,10 @@ public class ParkingSlotService {
 
         return parkingSlots;
     }
+
+    public List<ParkingSlot> addSlots(List<ParkingSlot> parkingSlots) throws Exception{
+        List<ParkingSlot> parkingSlotsResp = new ArrayList<>();
+        parkingSlotsResp = parkingSlotRepository.saveAll(parkingSlots);
+        return parkingSlotsResp;
+    }
 }
