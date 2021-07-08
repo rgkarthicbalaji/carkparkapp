@@ -22,7 +22,7 @@ public class SlotBooking implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @Column(name = "BOOKING_UUID")
     private UUID bookingUniqueId;
