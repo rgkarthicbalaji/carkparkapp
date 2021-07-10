@@ -1,5 +1,6 @@
 package com.asses.park.service;
 
+import com.asses.park.exception.ParkingSlotNotFoundException;
 import com.asses.park.model.Customer;
 import com.asses.park.model.ParkingSlot;
 import com.asses.park.repository.CustomerRepository;
@@ -18,19 +19,19 @@ public class ParkingSlotService {
     @Autowired
     ParkingSlotRepository parkingSlotRepository;
 
-    public List<ParkingSlot> availableSlots() {
-        //TODO: Handle errors
-        List<ParkingSlot> parkingSlots = new ArrayList<>();
+    public List<ParkingSlot> availableSlots() throws Exception{
+        List<ParkingSlot> parkingSlots;
         Optional<List<ParkingSlot>> optionalParkingSlots = Optional.ofNullable(parkingSlotRepository.findAll());
         if(optionalParkingSlots.isPresent()){
             parkingSlots = optionalParkingSlots.get();
+        }else{
+            throw new ParkingSlotNotFoundException();
         }
-
         return parkingSlots;
     }
 
-    public List<ParkingSlot> addSlots(List<ParkingSlot> parkingSlots) throws Exception{
-        List<ParkingSlot> parkingSlotsResp = new ArrayList<>();
+    public List<ParkingSlot> addSlots(List<ParkingSlot> parkingSlots){
+        List<ParkingSlot> parkingSlotsResp;
         parkingSlotsResp = parkingSlotRepository.saveAll(parkingSlots);
         return parkingSlotsResp;
     }
