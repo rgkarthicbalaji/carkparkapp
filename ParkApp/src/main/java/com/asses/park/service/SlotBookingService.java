@@ -9,15 +9,15 @@ import com.asses.park.repository.ParkingSlotRepository;
 import com.asses.park.repository.SlotBookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class SlotBookingService {
@@ -99,9 +99,9 @@ public class SlotBookingService {
                         List<SlotBooking> slotBookings = slotBookinUniqueOptional.get();
                         if (slotBookings.size() == 1) {
                             SlotBooking presentSlotBooking = slotBookings.get(0);
-/*                            if(Timestamp.valueOf(LocalDateTime.now()).before(presentSlotBooking.getEndTime())){
-                                throw new Exception(BOOKING_END_TIME_NOT_ELASPED);
-                            }else{*/
+                            if(Timestamp.valueOf(LocalDateTime.now()).before(presentSlotBooking.getEndTime())){
+                                throw new BookingParamsNotValidException(BOOKING_END_TIME_NOT_ELASPED);
+                            }else{
                             ParkingSlot presentParkingSlot = presentSlotBooking.getParkingSlot();
                             Customer presentCustomer = presentSlotBooking.getCustomer();
 
@@ -123,7 +123,7 @@ public class SlotBookingService {
                             presentParkingSlot.setIsBooked(Boolean.FALSE);
                             slotBookingRepository.saveAndFlush(presentSlotBooking);
                             bookingResp = slotBookingRepository.saveAndFlush(newSlotBooking);
-//                            }
+                            }
                         } else {
                             throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INAPPROPRIATE);
                         }
@@ -133,12 +133,9 @@ public class SlotBookingService {
                 } else {
                     throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
                 }
-
-
             } else {
                 throw new ParkingSlotTimeNotInRageException();
             }
-
         } else {
             throw new CustomerNotFoundException();
         }
@@ -147,9 +144,9 @@ public class SlotBookingService {
 
     public Long cancelParkingSlot(UUID bookingUniqueId) throws Exception {
         Long slotUsageHours = null;
-        Optional<List<SlotBooking>> slotBookingOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueId(bookingUniqueId));
+        Optional<List<SlotBooking>> slotBookingOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueId(bookingUniqueId)).filter(list->!list.isEmpty());
         if (slotBookingOptional.isPresent()) {
-            Optional<List<SlotBooking>> slotBookinUniqueOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueIdAndIsBookedNow(bookingUniqueId, Boolean.TRUE));
+            Optional<List<SlotBooking>> slotBookinUniqueOptional = Optional.ofNullable(slotBookingRepository.findByBookingUniqueIdAndIsBookedNow(bookingUniqueId, Boolean.TRUE)).filter(list->!list.isEmpty());
             if (slotBookinUniqueOptional.isPresent()) {
                 List<SlotBooking> slotBookings = slotBookinUniqueOptional.get();
                 if (slotBookings.size() == 1) {
@@ -238,12 +235,9 @@ public class SlotBookingService {
                         } else {
                             throw new BookingParamsNotValidException(BOOKING_UNIQUEID_INVALID_REFERENCE);
                         }
-
-
                     } else {
                         throw new ParkingSlotTimeNotInRageException();
                     }
-
                 } else {
                     throw new CustomerNotFoundException();
                 }

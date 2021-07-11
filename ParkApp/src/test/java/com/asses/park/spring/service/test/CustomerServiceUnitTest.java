@@ -44,12 +44,12 @@ public class CustomerServiceUnitTest {
     @Test(expected = CustomerAlreadyRegisteredException.class)
     public void when_existing_customer_then_throw_exception() throws Exception{
         Customer karthic = new Customer(1L, "karthic@gmail.com", "karthic",null);
-        customerService.createParkingUser(karthic);
+        customerService.createParkingCustomer(karthic);
     }
 
     @Test
     public void when_valid_customer_then_check() throws Exception{
         Customer balaji = new Customer(2L, "balaji@gmail.com", "balaji",null);
-        assertThat(customerService.createParkingUser(balaji)).isEqualTo(balaji);
+        assertThat(customerService.createParkingCustomer(balaji)).isEqualTo(balaji);
     }
 }

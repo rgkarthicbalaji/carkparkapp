@@ -2,6 +2,7 @@ package com.asses.park.controller;
 
 import com.asses.park.dto.CustomResponse;
 import com.asses.park.dto.SlotBookingInfo;
+import com.asses.park.exception.BookingParamsNotValidException;
 import com.asses.park.model.SlotBooking;
 import com.asses.park.service.SlotBookingService;
 import com.asses.park.util.Utility;
@@ -30,7 +31,6 @@ public class SlotBookingController {
 
     @PutMapping(path = "/allocate", produces = {"application/json"}, consumes = {"application/json"})
     @ResponseBody
-    //TODO: Check validation on all input parameters
     public ResponseEntity<SlotBookingInfo> allocateParkingSlot(@Valid @RequestBody SlotBookingInfo slotBookingInfoReq) throws Exception {
         LocalDateTime now = LocalDateTime.now();
         slotBookingInfoReq.setStartTime(Timestamp.valueOf(now));
@@ -45,7 +45,7 @@ public class SlotBookingController {
     @ResponseBody
     public ResponseEntity<SlotBookingInfo> reAllocateParkingSlot(@Valid @RequestBody SlotBookingInfo slotBookingInfoReq) throws Exception {
         if(null==slotBookingInfoReq.getBookingUniqueId()){
-            throw new Exception("Please provide bookingUniqueId and it should be valid one");
+            throw new BookingParamsNotValidException("Please provide bookingUniqueId and it should be valid one");
         }
         LocalDateTime now = LocalDateTime.now();
         slotBookingInfoReq.setStartTime(Timestamp.valueOf(now));
@@ -59,6 +59,9 @@ public class SlotBookingController {
     @PutMapping(path = "/cancel/", produces = {"application/json"})
     @ResponseBody
     public CustomResponse cancelParkingSlot(@RequestParam UUID bookingUniqueId) throws Exception {
+            if(null == bookingUniqueId){
+                throw new BookingParamsNotValidException("Please provide bookingUniqueId and it should be valid one");
+            }
             Long usageTime = slotBookingService.cancelParkingSlot(bookingUniqueId);
             CustomResponse customResponse = new CustomResponse(HttpStatus.OK,"Your Parking Slot Is Cancelled Now, Your Total Parking Usage Time Is "+usageTime+" hrs");
             return customResponse;

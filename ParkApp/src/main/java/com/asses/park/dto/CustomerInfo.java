@@ -24,7 +24,6 @@ public class CustomerInfo implements Serializable{
     @Email(message = "Please provide a valid email E.g abcd@gmail.com",regexp=".+@.+\\..+")
     private String email;
 
-    //@NotBlank(message = "fullName should not be blank")
     private String fullName;
 
 }

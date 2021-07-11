@@ -12,8 +12,7 @@ public class CustomerService {
     @Autowired
     CustomerRepository customerRepository;
 
-    //TODO: Handle error if user already exist
-    public Customer createParkingUser(Customer customer) throws Exception{
+    public Customer createParkingCustomer(Customer customer) throws Exception{
         Customer customerResponse = new Customer();
         if(!customerRepository.findById(customer.getSsNumber()).isPresent()){
             customerResponse = customerRepository.save(customer);

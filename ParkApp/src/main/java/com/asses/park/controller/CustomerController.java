@@ -6,18 +6,19 @@ import com.asses.park.service.CustomerService;
 import com.asses.park.util.Utility;
 import io.swagger.annotations.Api;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.text.ParseException;
 
 @RestController
 @RequestMapping("/api/v1/parking/customer")
 @Api(value = "Customer Account API", description = "Customer Account API")
 @AllArgsConstructor
+@NoArgsConstructor
 public class CustomerController {
 
     @Autowired
@@ -28,11 +29,9 @@ public class CustomerController {
 
     @PostMapping(path = "/create", produces = {"application/json"}, consumes = {"application/json"})
     @ResponseBody
-    //TODO: Check validation on all input parameters
-    public ResponseEntity<CustomerInfo> createParkingUser(@Valid @RequestBody CustomerInfo customerInfo) throws Exception {
-        //Customer customer = (Customer) utlity.convertObject(customerInfo, new TypeReference<Customer>() {});
+    public ResponseEntity<CustomerInfo> createParkingCustomer(@Valid @RequestBody CustomerInfo customerInfo) throws Exception {
         Customer customer = utility.customerDtoToModel.apply(customerInfo);
-        Customer customerServiceResp = customerService.createParkingUser(customer);
+        Customer customerServiceResp = customerService.createParkingCustomer(customer);
         CustomerInfo parkingUserContrllerResp = utility.customerModelToDto.apply(customerServiceResp);
         return ResponseEntity.status(HttpStatus.CREATED).body(parkingUserContrllerResp);
     }

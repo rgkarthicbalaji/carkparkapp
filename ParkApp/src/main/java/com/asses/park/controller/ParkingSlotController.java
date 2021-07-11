@@ -25,7 +25,6 @@ public class ParkingSlotController {
 
     @GetMapping(path = "/availableSlots", produces = {"application/json"})
     @ResponseBody
-    //TODO: Check validation on all input parameters
     public ResponseEntity<List<ParkingSlotInfo>> availableSlots() throws Exception {
         List<ParkingSlot> parkingSlots = parkingSlotService.availableSlots();
         List<ParkingSlotInfo> parkingSlotInfo = utility.parkingSlotModelListToDto.apply(parkingSlots);
@@ -34,7 +33,6 @@ public class ParkingSlotController {
 
     @PostMapping(path = "/addSlots", produces = {"application/json"}, consumes = {"application/json"})
     @ResponseBody
-    //TODO: Check validation on all input parameters
     public ResponseEntity<List<ParkingSlotInfo>> addSlots(@RequestBody List<ParkingSlotInfo> parkingSlotInfos) throws Exception {
         if(parkingSlotInfos.size()<=0){
             throw new Exception("Need to pass more than one ParkingSlotInfo(s)");
