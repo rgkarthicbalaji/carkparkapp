@@ -175,7 +175,7 @@ public class SlotBookingService {
         return slotUsageHours;
     }
 
-    @Scheduled(initialDelay = 60000, fixedRate = 1800000)
+    @Scheduled(initialDelay = 16200000, fixedRate = 16200000)
     @Transactional
     public void runParkingSlotReallocationTask() throws Exception {
         Optional<List<SlotBooking>> slotBookingsOptional = Optional.ofNullable(slotBookingRepository.findByIsBookedNow(Boolean.TRUE));
