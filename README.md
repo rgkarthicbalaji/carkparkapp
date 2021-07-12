@@ -6,7 +6,7 @@ This application is used to register customer,fetch parking slots information an
 1. Customer has to wait for his hourslot time to complete to perform reallocate, but he is allowed to perform cancel any time. 
 
 2. Auto Reallocate logic is created as such: 
-There is a 30 minutes grace period for a customer to reallocate, post usage of his overall hourslot allocation & usage. If the customer does not perform either reallocate or cancel within this grace period, auto reallocate happens with the same hourslot which customer has early provided during previous booking.
+Auto Reallocate happens for every 4.5 hours. There is a 4.5 hours period(Maximum slot time of 4 hours according to system+30 minutes grace period)  for a customer to reallocate, post usage of his overall hourslot allocation & usage. If the customer does not perform either reallocate or cancel within maximum of  period, auto reallocate happens with the same hourslot which customer has early provided during previous booking.
 
 # Application Design
 
