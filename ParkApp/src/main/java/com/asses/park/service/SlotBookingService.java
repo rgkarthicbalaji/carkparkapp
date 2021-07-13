@@ -7,6 +7,7 @@ import com.asses.park.model.SlotBooking;
 import com.asses.park.repository.CustomerRepository;
 import com.asses.park.repository.ParkingSlotRepository;
 import com.asses.park.repository.SlotBookingRepository;
+import lombok.Generated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -175,7 +176,8 @@ public class SlotBookingService {
         return slotUsageHours;
     }
 
-    @Scheduled(initialDelay = 16200000, fixedRate = 16200000)
+    @Generated
+    @Scheduled(initialDelay = 162000, fixedRate = 162000)
     @Transactional
     public void runParkingSlotReallocationTask() throws Exception {
         Optional<List<SlotBooking>> slotBookingsOptional = Optional.ofNullable(slotBookingRepository.findByIsBookedNow(Boolean.TRUE));
